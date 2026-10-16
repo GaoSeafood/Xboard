@@ -1,0 +1,90 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: xboard-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out the fork
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/cedar2025/Xboard.git
+          git fetch upstream master --no-tags
+
+      - name: Check whether upstream has new commits
+        id: changes
+        shell: bash
+        run: echo "count=$(git rev-list --count HEAD..upstream/master)" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare the update branch
+        if: steps.changes.outputs.count != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create automation/upstream-sync
+          git merge --no-edit upstream/master
+
+      - name: Push the update branch
+        if: steps.changes.outputs.count != '0'
+        run: git push --force origin automation/upstream-sync
+
+      - name: Open or refresh the review PR
+        if: steps.changes.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GH_OWNER: ${{ github.repository_owner }}
+        run: |
+          cat > /tmp/pr-body.md <<'EOF'
+          This PR brings the fork up to date with `cedar2025/Xboard`.
+
+          Please review the upstream changes and the PR build before merging. This workflow does not merge updates or deploy to the production server. Merge conflicts stop the workflow and notify the repository owner.
+          EOF
+
+          pr_number="$(gh pr list --repo "$GH_REPO" --state open --base master --head "$GH_OWNER:automation/upstream-sync" --json number --jq '.[0].number // empty')"
+          if [[ -n "$pr_number" ]]; then
+            gh pr edit "$pr_number" --repo "$GH_REPO" --title "chore: sync Xboard upstream" --body-file /tmp/pr-body.md
+          else
+            gh pr create --repo "$GH_REPO" --base master --head "$GH_OWNER:automation/upstream-sync" --title "chore: sync Xboard upstream" --body-file /tmp/pr-body.md
+          fi
+
+  notify:
+    if: ${{ always() && needs.propose.result == 'failure' }}
+    needs: [propose]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Notify the repository owner on the setup PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GH_OWNER: ${{ github.repository_owner }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body="$(cat <<EOF
+          @${GH_OWNER} the scheduled Xboard upstream sync failed.
+
+          This may be a merge conflict or a GitHub/network error. No automatic merge or production deployment was performed. Review the failed run and resolve the issue before retrying:
+          ${RUN_URL}
+          EOF
+          )"
+          gh api --method POST "repos/${GH_REPO}/issues/1/comments" -f body="$body"
