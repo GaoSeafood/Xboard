@@ -1,6 +1,6 @@
 {
-  "name": "Xboard",
-  "description": "Xboard",
+  "name": "筋斗云",
+  "description": "米酒出品 · Xboard 网络连接与订阅管理",
   "version": "1.0.0",
   "images": "",
   "configs": [
@@ -11,11 +11,11 @@
       "field_type": "select",
       "select_options": {
         "default": "默认(绿色)",
-        "blue": "蓝色",
+        "blue": "筋斗云蓝",
         "black": "黑色",
         "darkblue": "暗蓝色"
       },
-      "default_value": "default"
+      "default_value": "blue"
     },
     {
       "label": "背景",

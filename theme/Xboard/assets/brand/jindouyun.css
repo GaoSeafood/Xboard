@@ -1,0 +1,296 @@
+/* Jindouyun brand tokens and presentation overrides for the bundled Xboard UI. */
+:root {
+  --jy-page: #f4f7fb;
+  --jy-surface: #ffffff;
+  --jy-text: #1d2939;
+  --jy-muted: #66758a;
+  --jy-border: #e3eaf1;
+  --jy-action: #247bb8;
+  --jy-action-hover: #1f6fa8;
+  --jy-action-pressed: #1b628f;
+  --jy-cloud: #55a9e8;
+  --jy-cloud-soft: #eaf5fc;
+  --jy-brown: #a94d32;
+  --jy-success: #21865d;
+  --jy-warning: #a86413;
+  --jy-error: #b33a3a;
+  --primary-color: var(--jy-action);
+  color-scheme: light;
+}
+
+html.dark,
+body.dark {
+  --jy-page: #111b29;
+  --jy-surface: #182537;
+  --jy-text: #e8eef5;
+  --jy-muted: #a4b2c4;
+  --jy-border: #2d3c50;
+  --jy-cloud-soft: #1d354b;
+  --primary-color: var(--jy-cloud);
+  color-scheme: dark;
+}
+
+html,
+body {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--jy-page);
+  color: var(--jy-text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+}
+
+#app,
+#app .n-config-provider {
+  min-height: 100%;
+  background: var(--jy-page);
+}
+
+#app .n-config-provider {
+  --primary-color: var(--jy-action) !important;
+  --n-primary-color: var(--jy-action) !important;
+  --n-primary-color-hover: var(--jy-action-hover) !important;
+  --n-primary-color-pressed: var(--jy-action-pressed) !important;
+  --n-primary-color-suppl: var(--jy-action) !important;
+  color: var(--jy-text);
+}
+
+#app .n-layout,
+#app .n-layout-scroll-container,
+#app .cus-scroll-y,
+#app .flex-1.overflow-hidden.bg-hex-f5f6fb {
+  background-color: var(--jy-page) !important;
+  color: var(--jy-text);
+}
+
+#app .n-layout-sider {
+  background-color: var(--jy-surface) !important;
+  border-right: 1px solid var(--jy-border);
+}
+
+#app .n-layout-sider .h-15.f-c-c.relative {
+  justify-content: flex-start;
+  gap: 8px;
+  padding-inline: 16px;
+}
+
+#app .n-layout-sider--collapsed .h-15.f-c-c.relative {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+#app .n-layout-sider img[src*="jindouyun-mijiu-logo"] {
+  width: 38px;
+  height: 38px !important;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+#app .n-layout-sider--collapsed img[src*="jindouyun-mijiu-logo"] {
+  width: 34px;
+  height: 34px !important;
+}
+
+#app .n-layout-sider h2.title-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: none !important;
+  color: var(--jy-text) !important;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.015em;
+}
+
+#app .n-layout-sider h2.title-text::after {
+  content: "米酒出品";
+  display: block;
+  margin-top: 4px;
+  color: var(--jy-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+
+#app .n-layout-header {
+  background-color: var(--jy-surface) !important;
+  border-bottom: 1px solid var(--jy-border);
+  color: var(--jy-text);
+}
+
+#app .side-menu .n-menu-item-content {
+  margin: 3px 8px;
+  border-radius: 10px;
+  color: var(--jy-muted);
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+#app .side-menu .n-menu-item-content:hover {
+  background-color: var(--jy-cloud-soft) !important;
+  color: var(--jy-action) !important;
+}
+
+#app .side-menu .n-menu-item-content.n-menu-item-content--selected {
+  background-color: var(--jy-cloud-soft) !important;
+  color: var(--jy-action) !important;
+  font-weight: 600;
+}
+
+#app .side-menu:not(.n-menu--collapsed) .n-menu-item-content.n-menu-item-content--selected::before {
+  border-left-color: var(--jy-action) !important;
+  border-radius: 4px;
+}
+
+#app .side-menu .n-menu-item-content-header,
+#app .side-menu .n-menu-item-content__icon {
+  color: inherit;
+}
+
+#app .n-card {
+  border: 1px solid var(--jy-border) !important;
+  border-radius: 16px !important;
+  background: var(--jy-surface) !important;
+  box-shadow: 0 2px 10px rgb(29 41 57 / 3%);
+  color: var(--jy-text);
+}
+
+#app .n-card-header,
+#app .n-card-header__main,
+#app .n-card__content {
+  color: var(--jy-text);
+}
+
+#app .n-button {
+  min-height: 38px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+#app .n-button--primary-type {
+  --n-color: var(--jy-action) !important;
+  --n-color-hover: var(--jy-action-hover) !important;
+  --n-color-pressed: var(--jy-action-pressed) !important;
+  --n-text-color: #ffffff !important;
+  --n-text-color-hover: #ffffff !important;
+  --n-text-color-pressed: #ffffff !important;
+  --n-border: 1px solid var(--jy-action) !important;
+  --n-border-hover: 1px solid var(--jy-action-hover) !important;
+  --n-border-pressed: 1px solid var(--jy-action-pressed) !important;
+}
+
+#app .n-input,
+#app .n-base-selection,
+#app .n-date-picker,
+#app .n-input-number {
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+#app .n-input:focus-within,
+#app .n-base-selection:focus-within,
+#app .n-date-picker:focus-within,
+#app .n-input-number:focus-within {
+  box-shadow: 0 0 0 3px rgb(36 123 184 / 16%);
+}
+
+#app .n-data-table,
+#app .n-data-table-th,
+#app .n-data-table-td,
+#app .n-pagination {
+  color: var(--jy-text);
+}
+
+#app .n-data-table-th {
+  background-color: var(--jy-cloud-soft) !important;
+  color: var(--jy-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#app .n-data-table-td {
+  border-color: var(--jy-border) !important;
+}
+
+#app .n-tag--success-type {
+  --n-color: #e8f5ee !important;
+  --n-text-color: var(--jy-success) !important;
+  --n-border: 1px solid #c7e8d6 !important;
+}
+
+#app .n-tag--warning-type {
+  --n-color: #fff4e5 !important;
+  --n-text-color: var(--jy-warning) !important;
+  --n-border: 1px solid #f1d9b5 !important;
+}
+
+#app .n-tag--error-type {
+  --n-color: #fff0f0 !important;
+  --n-text-color: var(--jy-error) !important;
+  --n-border: 1px solid #f0cccc !important;
+}
+
+#app .n-alert {
+  border-radius: 12px;
+}
+
+#app a:not(.n-button) {
+  color: var(--jy-action);
+  text-underline-offset: 3px;
+}
+
+#app a:not(.n-button):hover {
+  color: var(--jy-action-hover);
+}
+
+#app :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgb(36 123 184 / 42%);
+  outline-offset: 2px;
+}
+
+#app .text-gray-500,
+#app .text-gray-400,
+#app .text-gray-600,
+#app .text-muted {
+  color: var(--jy-muted) !important;
+}
+
+#app .max-w-1200 {
+  max-width: 1200px;
+}
+
+@media (max-width: 768px) {
+  #app .n-card {
+    border-radius: 14px !important;
+  }
+
+  #app .n-layout-header {
+    min-height: 56px;
+  }
+
+  #app .max-w-1200 {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app *,
+  #app *::before,
+  #app *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
