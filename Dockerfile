@@ -16,16 +16,18 @@ WORKDIR /www
 
 COPY .docker /
 
-# Add build arguments
-ARG CACHEBUST=1
-ARG REPO_URL=https://github.com/cedar2025/Xboard
-ARG BRANCH_NAME=master
+# Build from the exact repository commit selected by deployment automation.
+ARG REPO_URL=https://github.com/cedar2025/Xboard.git
+ARG SOURCE_SHA=
 
-RUN echo "Attempting to clone branch: ${BRANCH_NAME} from ${REPO_URL} with CACHEBUST: ${CACHEBUST}" && \
-    rm -rf ./* && \
-    rm -rf .git && \
+RUN rm -rf ./* ./.??* 2>/dev/null || true; \
+    if [ -n "$SOURCE_SHA" ]; then \
+      git init . && git remote add origin "$REPO_URL" && \
+      git fetch --depth 1 origin "$SOURCE_SHA" && git checkout --detach FETCH_HEAD; \
+    else \
+      git clone --depth 1 --branch master "$REPO_URL" .; \
+    fi && \
     git config --global --add safe.directory /www && \
-    git clone --depth 1 --branch ${BRANCH_NAME} ${REPO_URL} . && \
     git submodule update --init --recursive --force
 
 COPY .docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
