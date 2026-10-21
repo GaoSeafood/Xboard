@@ -29,3 +29,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
           provenance: false
+          build-args: |
+            REPO_URL=https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git
+            SOURCE_SHA=${{ github.event.pull_request.head.sha }}
