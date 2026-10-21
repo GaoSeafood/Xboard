@@ -4,7 +4,7 @@ window.settings = {
   // 站点名称
   title: '筋斗云',
   // 站点描述
-  description: '米酒出品 · 翻个跟头，连上就走。',
+  description: '筋斗云',
   assets_path: '/assets',
   // 主题色
   theme: {

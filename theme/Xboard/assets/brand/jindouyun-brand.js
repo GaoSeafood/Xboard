@@ -4,7 +4,7 @@
 
   const assetsPath = String(settings.assets_path || "/assets").replace(/\/$/, "");
   settings.title = "筋斗云";
-  settings.description = "米酒出品 · 翻个跟头，连上就走。";
+  settings.description = settings.title;
   settings.logo = `${assetsPath}/brand/jindouyun-mijiu-logo-512.webp`;
   settings.theme = { ...(settings.theme || {}), color: "blue" };
   document.title = settings.title;
@@ -14,7 +14,18 @@
     images.forEach((image) => {
       if (!image.hasAttribute("alt") || !image.alt) image.alt = "筋斗云";
     });
-    return images.length > 0;
+
+    const loginImage = Array.from(images).find((image) => !image.closest(".n-layout-sider"));
+    if (loginImage) {
+      const logo = loginImage.parentElement;
+      logo?.classList.add("jindouyun-login-logo");
+      const title = logo?.nextElementSibling;
+      if (title?.tagName === "H5") {
+        title.classList.add("jindouyun-login-title");
+      }
+    }
+
+    return Boolean(loginImage);
   };
 
   if (!labelLogo() && "MutationObserver" in window) {

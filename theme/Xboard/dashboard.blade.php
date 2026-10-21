@@ -7,7 +7,7 @@
   <title>筋斗云</title>
   <meta name="theme-color" content="#F4F7FB" />
   <link rel="icon" type="image/png" href="/theme/{{$theme}}/assets/brand/jindouyun-mijiu-logo-32.png" />
-  <link rel="stylesheet" href="/theme/{{$theme}}/assets/brand/jindouyun.css" />
+  <link rel="stylesheet" href="/theme/{{$theme}}/assets/brand/jindouyun.css?v=20261021" />
   <script type="module" crossorigin src="/theme/{{$theme}}/assets/umi.js"></script>
 </head>
 
@@ -23,7 +23,7 @@
       },
       version: '{{$version}}',
       background_url: '{{$theme_config['background_url']}}',
-      description: '米酒出品 · 翻个跟头，连上就走。',
+      description: '筋斗云',
       i18n: [
         'zh-CN',
         'en-US',
@@ -36,7 +36,7 @@
       logo: '/theme/{{$theme}}/assets/brand/jindouyun-mijiu-logo-512.webp'
     }
   </script>
-  <script src="/theme/{{$theme}}/assets/brand/jindouyun-brand.js"></script>
+  <script src="/theme/{{$theme}}/assets/brand/jindouyun-brand.js?v=20261021"></script>
   <div id="app"></div>
   {!! $theme_config['custom_html'] !!}
 </body>

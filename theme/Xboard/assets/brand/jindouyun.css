@@ -109,15 +109,30 @@ body {
   letter-spacing: 0.015em;
 }
 
-#app .n-layout-sider h2.title-text::after {
-  content: "米酒出品";
+#app .jindouyun-login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0 !important;
+}
+
+#app .jindouyun-login-logo img {
   display: block;
-  margin-top: 4px;
-  color: var(--jy-muted);
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0.06em;
+  width: 148px;
+  max-width: 100%;
+  height: auto !important;
+  margin-bottom: 0 !important;
+  object-fit: contain;
+}
+
+#app .jindouyun-login-title {
+  margin: 8px 0 0 !important;
+  color: var(--jy-text) !important;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  text-align: center;
 }
 
 #app .n-layout-header {
@@ -271,6 +286,14 @@ body {
 }
 
 @media (max-width: 768px) {
+  #app .jindouyun-login-logo img {
+    width: 124px;
+  }
+
+  #app .jindouyun-login-title {
+    font-size: 22px;
+  }
+
   #app .n-card {
     border-radius: 14px !important;
   }
