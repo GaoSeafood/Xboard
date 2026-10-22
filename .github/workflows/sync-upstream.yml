@@ -36,11 +36,45 @@ jobs:
 
       - name: Prepare the update branch
         if: steps.changes.outputs.count != '0'
+        shell: bash
         run: |
+          set -Eeuo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --create automation/upstream-sync
-          git merge --no-edit upstream/master
+          if git merge --no-edit upstream/master; then
+            exit 0
+          fi
+
+          mapfile -t conflicts < <(git diff --name-only --diff-filter=U | sort)
+          if ((${#conflicts[@]} == 0)); then
+            echo "Merge failed without a recognized file conflict." >&2
+            exit 1
+          fi
+          for path in "${conflicts[@]}"; do
+            case "$path" in
+              .github/workflows/docker-publish.yml|Dockerfile) ;;
+              *) printf 'Unexpected upstream conflict: %s\n' "$path" >&2; exit 1 ;;
+            esac
+          done
+
+          if printf '%s\n' "${conflicts[@]}" | grep -Fxq .github/workflows/docker-publish.yml; then
+            # This repository intentionally does not publish GHCR images.
+            git rm -f .github/workflows/docker-publish.yml
+          fi
+
+          if printf '%s\n' "${conflicts[@]}" | grep -Fxq Dockerfile; then
+            # Keep upstream security/runtime changes and restore exact-SHA source builds.
+            git show upstream/master:Dockerfile > Dockerfile
+            python3 .github/scripts/resolve-xboard-dockerfile.py
+            git add Dockerfile
+          fi
+
+          if git diff --name-only --diff-filter=U | grep -q .; then
+            echo "Unresolved conflicts remain after the reviewed resolutions." >&2
+            exit 1
+          fi
+          git commit --no-edit
 
       - name: Push the update branch
         if: steps.changes.outputs.count != '0'
@@ -54,9 +88,11 @@ jobs:
           GH_OWNER: ${{ github.repository_owner }}
         run: |
           cat > /tmp/pr-body.md <<'EOF'
-          This PR brings the fork up to date with `cedar2025/Xboard`.
+          This PR brings `GaoSeafood/Xboard` up to date with `cedar2025/Xboard` while keeping the source-based deployment path and leaving GHCR publishing disabled.
 
-          Please review the upstream changes and the PR build before merging. This workflow does not merge updates or deploy to the production server. Merge conflicts stop the workflow and notify the repository owner.
+          The Dockerfile keeps the upstream PHP 8.2.35 security fix and Redis 8 compatibility change, while the app source is still fetched from this fork at the exact commit SHA selected by deployment automation. The current `composer.lock` is retained because upstream's lock would downgrade packages already newer in this fork.
+
+          Both supported architectures must pass the PR build. Workflow and Dockerfile changes require review; after merge, `source-deploy.yml` builds the merged GitHub commit on the server and checks the deployment health.
           EOF
 
           pr_number="$(gh pr list --repo "$GH_REPO" --state open --base master --head "$GH_OWNER:automation/upstream-sync" --json number --jq '.[0].number // empty')"
@@ -70,21 +106,15 @@ jobs:
     if: ${{ always() && needs.propose.result == 'failure' }}
     needs: [propose]
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
-      - name: Notify the repository owner on the setup PR
+      - name: Add failure details to the workflow summary
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          GH_OWNER: ${{ github.repository_owner }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          body="$(cat <<EOF
-          @${GH_OWNER} the scheduled Xboard upstream sync failed.
-
-          This may be a merge conflict or a GitHub/network error. No automatic merge or production deployment was performed. Review the failed run and resolve the issue before retrying:
-          ${RUN_URL}
-          EOF
-          )"
-          gh api --method POST "repos/${GH_REPO}/issues/1/comments" -f body="$body"
+          {
+            echo "## Xboard upstream sync needs attention"
+            echo
+            echo "The proposal job stopped. Review its merge or GitHub error before retrying. No merge or production deployment was performed."
+            echo
+            echo "[Open the failed run](${RUN_URL})"
+          } >> "$GITHUB_STEP_SUMMARY"
