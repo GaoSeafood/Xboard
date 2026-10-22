@@ -129,3 +129,11 @@ jobs:
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --merge --delete-branch
+
+      - name: Build and deploy after automatic merge
+        if: steps.gate.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BASE_REF: ${{ steps.gate.outputs.base_ref }}
+        run: gh workflow run source-deploy.yml --repo "$GH_REPO" --ref "$BASE_REF"

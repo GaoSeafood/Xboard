@@ -12,109 +12,76 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  propose:
+  sync:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
+      actions: write
     steps:
       - name: Check out the fork
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: master
           fetch-depth: 0
 
-      - name: Fetch upstream
-        run: |
-          git remote add upstream https://github.com/cedar2025/Xboard.git
-          git fetch upstream master --no-tags
-
-      - name: Check whether upstream has new commits
-        id: changes
-        shell: bash
-        run: echo "count=$(git rev-list --count HEAD..upstream/master)" >> "$GITHUB_OUTPUT"
-
-      - name: Prepare the update branch
-        if: steps.changes.outputs.count != '0'
+      - name: Merge upstream without overwriting fork changes
+        id: merge
         shell: bash
         run: |
           set -Eeuo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch --create automation/upstream-sync
-          if git merge --no-edit upstream/master; then
+          git remote add upstream https://github.com/cedar2025/Xboard.git
+
+          # Refresh the fork first. --ff-only refuses unexpected divergence.
+          git pull --ff-only origin master
+          git fetch upstream master --no-tags
+
+          if ! git merge-base HEAD upstream/master >/dev/null; then
+            echo "The fork and upstream do not share a merge base; stopping without changes." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          upstream_commits="$(git rev-list --count HEAD..upstream/master)"
+          if [[ "$upstream_commits" == 0 ]]; then
+            echo "No upstream commits to merge." >> "$GITHUB_STEP_SUMMARY"
+            echo "merged=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          mapfile -t conflicts < <(git diff --name-only --diff-filter=U | sort)
-          if ((${#conflicts[@]} == 0)); then
-            echo "Merge failed without a recognized file conflict." >&2
+          if ! git merge --no-edit --no-ff upstream/master; then
+            conflicts="$(git diff --name-only --diff-filter=U || true)"
+            {
+              echo "## Upstream sync stopped"
+              echo
+              if [[ -n "$conflicts" ]]; then
+                echo "The ordinary Git merge found conflicts. No changes were pushed or deployed. Resolve these files and rerun the workflow:"
+                echo
+                printf '%s\n' "$conflicts" | sed 's/^/- /'
+              else
+                echo "Git could not complete the merge. No changes were pushed or deployed. Review the log before retrying."
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+            git merge --abort || true
             exit 1
           fi
-          for path in "${conflicts[@]}"; do
-            case "$path" in
-              .github/workflows/docker-publish.yml|Dockerfile) ;;
-              *) printf 'Unexpected upstream conflict: %s\n' "$path" >&2; exit 1 ;;
-            esac
-          done
 
-          if printf '%s\n' "${conflicts[@]}" | grep -Fxq .github/workflows/docker-publish.yml; then
-            # This repository intentionally does not publish GHCR images.
-            git rm -f .github/workflows/docker-publish.yml
-          fi
-
-          if printf '%s\n' "${conflicts[@]}" | grep -Fxq Dockerfile; then
-            # Keep upstream security/runtime changes and restore exact-SHA source builds.
-            git show upstream/master:Dockerfile > Dockerfile
-            python3 .github/scripts/resolve-xboard-dockerfile.py
-            git add Dockerfile
-          fi
-
-          if git diff --name-only --diff-filter=U | grep -q .; then
-            echo "Unresolved conflicts remain after the reviewed resolutions." >&2
+          if ! git push origin HEAD:master; then
+            echo "The normal push was rejected, likely because master changed during the merge. No force push was attempted." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          git commit --no-edit
 
-      - name: Push the update branch
-        if: steps.changes.outputs.count != '0'
-        run: git push --force origin automation/upstream-sync
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Upstream sync merged"
+            echo
+            echo "Merged $upstream_commits upstream commits into the fork with an ordinary Git merge."
+            echo "Fork commit: \`$(git rev-parse --short HEAD)\`."
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Open or refresh the review PR
-        if: steps.changes.outputs.count != '0'
+      - name: Build and deploy the merged source
+        if: steps.merge.outputs.merged == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          GH_OWNER: ${{ github.repository_owner }}
-        run: |
-          cat > /tmp/pr-body.md <<'EOF'
-          This PR brings `GaoSeafood/Xboard` up to date with `cedar2025/Xboard` while keeping the source-based deployment path and leaving GHCR publishing disabled.
-
-          The Dockerfile keeps the upstream PHP 8.2.35 security fix and Redis 8 compatibility change, while the app source is still fetched from this fork at the exact commit SHA selected by deployment automation. The current `composer.lock` is retained because upstream's lock would downgrade packages already newer in this fork.
-
-          Both supported architectures must pass the PR build. Workflow and Dockerfile changes require review; after merge, `source-deploy.yml` builds the merged GitHub commit on the server and checks the deployment health.
-          EOF
-
-          pr_number="$(gh pr list --repo "$GH_REPO" --state open --base master --head "$GH_OWNER:automation/upstream-sync" --json number --jq '.[0].number // empty')"
-          if [[ -n "$pr_number" ]]; then
-            gh pr edit "$pr_number" --repo "$GH_REPO" --title "chore: sync Xboard upstream" --body-file /tmp/pr-body.md
-          else
-            gh pr create --repo "$GH_REPO" --base master --head "$GH_OWNER:automation/upstream-sync" --title "chore: sync Xboard upstream" --body-file /tmp/pr-body.md
-          fi
-
-  notify:
-    if: ${{ always() && needs.propose.result == 'failure' }}
-    needs: [propose]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Add failure details to the workflow summary
-        env:
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          {
-            echo "## Xboard upstream sync needs attention"
-            echo
-            echo "The proposal job stopped. Review its merge or GitHub error before retrying. No merge or production deployment was performed."
-            echo
-            echo "[Open the failed run](${RUN_URL})"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: gh workflow run source-deploy.yml --repo "$GH_REPO" --ref master
