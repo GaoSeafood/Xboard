@@ -2,18 +2,18 @@
 window.routerBase = 'http://127.0.0.1:8000/'
 window.settings = {
   // 站点名称
-  title: 'Xboard',
+  title: '筋斗云',
   // 站点描述
-  description: 'Xboard',
+  description: '筋斗云',
   assets_path: '/assets',
   // 主题色
   theme: {
-    color: 'default', //可选default、blue、black、、darkblue
+    color: 'blue', //可选default、blue、black、darkblue
   },
   // 版本号
   version: '0.1.1-dev',
   // 登陆背景
   background_url: '',
   // 站点LOGO
-  logo: '',
+  logo: '/assets/brand/jindouyun-mijiu-logo-512.webp',
 }
