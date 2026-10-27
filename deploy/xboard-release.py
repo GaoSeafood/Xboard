@@ -178,7 +178,7 @@ def healthy(target, image, endpoint):
     states = run(['docker', 'exec', CONTAINER, 'supervisorctl', '-c',
                   '/etc/supervisor/conf.d/supervisord.conf', 'status'])
     for program in ['octane', 'horizon', 'redis', 'caddy']:
-        if not re.search(r'^' + program + r'(?:_\d+)?\s+RUNNING\b', states, re.M):
+        if not re.search(r'^' + program + r'(?::' + program + r')?(?:_\d+)?\s+RUNNING\b', states, re.M):
             raise RuntimeError(program + ' is not running')
     if any(m['Destination'] in THEME_TARGETS for m in container['Mounts']):
         raise RuntimeError('Legacy theme overrides still cover image files')

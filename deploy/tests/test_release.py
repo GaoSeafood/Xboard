@@ -89,6 +89,21 @@ services:
 
 
 class DeploymentSafety(unittest.TestCase):
+    def test_health_accepts_grouped_supervisor_names_but_rejects_crashed_queue(self):
+        target = 'd' * 40
+        container = {'Image': 'sha256:expected', 'State': {'Status': 'running'},
+                     'Config': {'Labels': {'org.opencontainers.image.revision': target}}, 'Mounts': []}
+        processes = 'octane:octane_00 RUNNING\nhorizon:horizon_00 RUNNING\nredis RUNNING\ncaddy RUNNING\n'
+        with patch.object(release, 'inspect', return_value=container), \
+             patch.object(release, 'run', return_value=processes), \
+             patch.object(release, 'verify_http') as verify:
+            release.healthy(target, 'sha256:expected', 'https://example.invalid')
+            self.assertEqual(verify.call_count, 2)
+        with patch.object(release, 'inspect', return_value=container), \
+             patch.object(release, 'run', return_value=processes.replace('horizon_00 RUNNING', 'horizon_00 BACKOFF')):
+            with self.assertRaisesRegex(RuntimeError, 'horizon'):
+                release.healthy(target, 'sha256:expected', 'https://example.invalid')
+
     def test_failed_post_restart_checks_restore_immutable_previous_image(self):
         with tempfile.TemporaryDirectory() as directory:
             app = Path(directory)
