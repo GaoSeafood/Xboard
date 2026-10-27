@@ -14,6 +14,9 @@ jobs:
       - name: Check out the proposed changes
         uses: actions/checkout@v4
 
+      - name: Verify release worker safety checks
+        run: python3 -m unittest discover -s deploy/tests -v
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:

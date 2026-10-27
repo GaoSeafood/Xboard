@@ -56,7 +56,8 @@ RUN rm -rf ./* ./.??* 2>/dev/null || true; \
     else \
       git clone --depth 1 --branch master "$REPO_URL" .; \
     fi && \
-    git submodule update --init --recursive --force
+    git submodule update --init --recursive --force && \
+    php -r '$sha=trim(shell_exec("git rev-parse HEAD")); if (!preg_match("/^[a-f0-9]{40}$/", $sha)) exit(1); file_put_contents("public/release.json", json_encode(["revision" => $sha]) . "\n");'
 
 COPY .docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY .docker/caddy/Caddyfile /etc/caddy/Caddyfile
