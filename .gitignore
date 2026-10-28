@@ -32,3 +32,13 @@ compose.yaml
 compose.host.yaml
 compose.split.yaml
 .scribe
+
+# Local environment overrides and credential files
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+credentials*.json
+secrets/
