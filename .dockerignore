@@ -1,5 +1,6 @@
 /node_modules
 /config/v2board.php
+/config/googleCloudStorageKey.json
 /public/hot
 /public/storage
 /public/env.example.js
@@ -7,6 +8,13 @@
 /vendor
 .env
 .env.backup
+.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
+credentials*.json
+secrets/
 .phpunit.result.cache
 .idea
 .lock
