@@ -6,31 +6,53 @@ not install or execute a replacement worker from a newly fetched commit.
 
 ## Entry points
 
-* `source-deploy.yml`: a push to `master` builds AMD64 and ARM64, then sends a
-  signed request to the existing CreativeOps deployment receiver. The receiver
-  invokes `/usr/local/sbin/xboard-auto-deploy SHA` and reports its exit status.
-* `xboard-source-update.timer`: checks the owned fork's `master` every five
-  minutes, with up to 30 seconds of jitter. This runs independently of GitHub
-  Actions and builds the native production architecture (ARM64).
+* `source-deploy.yml`: pull requests build AMD64 and ARM64 and run release-worker
+  safety checks without production credentials. A push to `master` builds the
+  exact commit, joins the private Tailscale network with OIDC, then connects to
+  the VPS through a project-specific forced SSH command. The root-owned server
+  worker receives that exact SHA and performs the existing backup, deployment,
+  health-check, and rollback flow.
+* `xboard-source-update.timer`: the existing five-minute source poller remains a
+  fallback until the first GitHub Actions deployment succeeds and the running
+  release is verified. Disable the timer after that handoff; keep the service
+  and worker available for a deliberate recovery if GitHub Actions becomes
+  unavailable.
 
-Both entry points share `/var/lib/xboard-release/release.lock`. There is no
-repository webhook that deploys unchecked push events. The fallback is an owned
-server service; it does not repair GitHub's repository-level Actions restriction.
+Both entry points invoke the same root-owned worker and share
+`/var/lib/xboard-release/release.lock`, so they cannot replace each other's
+release concurrently. The GitHub workflow only deploys on `master`; the
+`xboard-production` GitHub Environment must also restrict deployments to
+`master`. The Tailscale credential is scoped to `auth_keys` and tagged
+`tag:tingjian-ci`, whose saved network rule permits SSH to the VPS on TCP/22.
 
 ## Install after review
 
-Back up the existing worker and any existing units first. Install
+Back up the existing dispatcher, sudoers file, authorized-keys file, worker,
+and units first. Install
 `xboard-release.py` to `/usr/local/libexec/xboard-release.py` (root, 0755),
 `xboard-auto-deploy` to `/usr/local/sbin/xboard-auto-deploy` (root, 0755), and the
-service/timer to `/etc/systemd/system/` (root, 0644). Set the actual public HTTPS
-site URL in `/etc/github-deploy/xboard-public-url` (root, 0644). The public URL is
-not a credential. The existing source mirror must point to
+service/timer to `/etc/systemd/system/` (root, 0644). Add the XBoard case to the
+shared GitHub Actions dispatcher and sudoers allowlist, then install
+`github-actions-deploy-xboard` as a root-owned forced-command wrapper. Add one
+XBoard-only public key to the existing `tingjian-deploy` account, constrained to
+the Tailscale address range and that wrapper. Never place the private key in this
+repository. Set the actual public HTTPS site URL in
+`/etc/github-deploy/xboard-public-url` (root, 0644). The public URL is not a
+credential. The existing source mirror must point to
 `https://github.com/GaoSeafood/Xboard.git`.
 
-Validate with `python3 -m unittest discover -s deploy/tests -v`, `sh -n
-deploy/xboard-auto-deploy`, and `systemd-analyze verify` on both units. After
-merging the reviewed source, run `systemctl daemon-reload`, enable/start the timer,
-and start `xboard-source-update.service` for the initial release.
+Create the GitHub Environment `xboard-production`, add variables
+`TS_OAUTH_CLIENT_ID` and `TS_AUDIENCE`, store the matching private key as
+`DEPLOY_SSH_KEY`, and restrict deployments to the `master` branch. The Tailscale
+trust credential must match the GitHub OIDC subject for `GaoSeafood/Xboard` and
+`xboard-production`.
+
+After merging the reviewed source, verify that GitHub Actions deploys the exact
+`master` SHA and that the public release marker and health checks match it. Only
+then disable the fallback timer with `systemctl disable --now
+xboard-source-update.timer`. Do not stop or remove it before the Actions release
+passes verification. To restore polling during a GitHub outage, explicitly
+enable and start the timer after checking that no release is running.
 
 ## Release guarantees
 
