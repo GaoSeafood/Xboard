@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: xboard-production
+  group: xboard-source-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
