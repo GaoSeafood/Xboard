@@ -251,7 +251,7 @@ class ClashMeta extends AbstractProtocol
         //     array_unshift($config['rules'], "IP-CIDR,{$nodeIP}/32,DIRECT,no-resolve");
         // });
 
-        return $config;
+        return \App\Support\Udp19302Rule::clash($config);
     }
 
     public static function buildShadowsocks($password, $server)
