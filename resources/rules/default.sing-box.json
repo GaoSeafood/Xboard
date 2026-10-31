@@ -98,6 +98,11 @@
         "auto_detect_interface": true,
         "rules": [
             {
+                "network": "udp",
+                "port": [19302],
+                "action": "reject"
+            },
+            {
                 "outbound": "dns-out",
                 "protocol": "dns"
             },

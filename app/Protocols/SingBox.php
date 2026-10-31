@@ -307,7 +307,9 @@ class SingBox extends AbstractProtocol
      */
     protected function buildRule()
     {
-        $rules = $this->config['route']['rules'];
+        $rule = ['network' => 'udp', 'port' => [19302], 'action' => 'reject'];
+        $rules = array_values(array_filter($this->config['route']['rules'], fn ($existing) => $existing !== $rule));
+        array_unshift($rules, $rule);
         $this->config['route']['rules'] = $rules;
     }
 
@@ -430,10 +432,10 @@ class SingBox extends AbstractProtocol
             unset($rule);
         }
 
-        if ($needsBlockOutbound) {
+        if ($needsBlockOutbound && !in_array('block', array_column($this->config['outbounds'] ?? [], 'tag'), true)) {
             $this->config['outbounds'][] = ['type' => 'block', 'tag' => 'block'];
         }
-        if ($needsDnsOutbound) {
+        if ($needsDnsOutbound && !in_array('dns-out', array_column($this->config['outbounds'] ?? [], 'tag'), true)) {
             $this->config['outbounds'][] = ['type' => 'dns', 'tag' => 'dns-out'];
         }
     }

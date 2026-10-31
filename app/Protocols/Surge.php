@@ -79,6 +79,7 @@ class Surge extends AbstractProtocol
 
 
         $config = subscribe_template('surge');
+        $config = \App\Support\Udp19302Rule::ini($config);
 
         // Subscription link
         $subsDomain = request()->header('Host');

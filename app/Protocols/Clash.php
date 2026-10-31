@@ -117,7 +117,7 @@ class Clash extends AbstractProtocol
             array_unshift($config['rules'], "DOMAIN,{$subsDomain},DIRECT");
         }
 
-        return $config;
+        return \App\Support\Udp19302Rule::clash($config);
     }
 
     public static function buildShadowsocks($uuid, $server)

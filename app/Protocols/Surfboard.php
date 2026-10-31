@@ -67,6 +67,7 @@ class Surfboard extends AbstractProtocol
         }
 
         $config = subscribe_template('surfboard');
+        $config = \App\Support\Udp19302Rule::ini($config);
         // Subscription link
         $subsURL = Helper::getSubscribeUrl($user['token']);
         $subsDomain = request()->header('Host');
