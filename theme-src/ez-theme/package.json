@@ -42,7 +42,7 @@
     "shepherd.js": "^14.5.0",
     "vue-confetti": "^2.3.0",
     "vue-confetti-explosion": "^1.0.2",
-    "vue-i18n": "^9.2.2",
+    "vue-i18n": "^11.4.14",
     "vue-markdown-render": "^2.2.1",
     "vue-router": "^4.5.0",
     "vue-shepherd": "^5.0.1",
